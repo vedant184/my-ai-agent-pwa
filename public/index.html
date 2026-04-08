@@ -13,14 +13,14 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f0f13;color:#e0e0e0;height:100vh;display:flex;flex-direction:column}
-.install-bar{background:linear-gradient(90deg,#7c6cf0,#5a4fd4);text-align:center;padding:6px;cursor:pointer;font-size:13px;display:none}
 header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #1e1e2e}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#7c6cf0,#5a4fd4);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px}
 .logo span{font-weight:600;font-size:16px}
 .hdr-btns{display:flex;gap:8px}
 .hdr-btns button{background:#1e1e2e;border:1px solid #2e2e3e;color:#e0e0e0;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px}
-.hdr-btns .install{background:#7c6cf0;border:none}
+.install-btn{background:linear-gradient(135deg,#7c6cf0,#5a4fd4)!important;border:none!important;color:#fff!important;font-weight:600;display:flex;align-items:center;gap:6px}
+.install-btn svg{width:16px;height:16px;fill:#fff}
 .lang-bar{display:flex;gap:6px;padding:8px 16px;overflow-x:auto;border-bottom:1px solid #1e1e2e}
 .lang-bar::-webkit-scrollbar{height:0}
 .lang{padding:4px 12px;border-radius:16px;border:1px solid #2e2e3e;font-size:12px;cursor:pointer;white-space:nowrap;transition:.2s}
@@ -56,13 +56,26 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 footer{text-align:center;padding:6px;font-size:11px;color:#555}
 [dir=rtl] .msg.user{align-self:flex-start}
 [dir=rtl] .msg.bot{align-self:flex-end}
+.install-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.install-modal.show{display:flex}
+.install-box{background:#1a1a24;border:1px solid #2e2e3e;border-radius:16px;padding:24px;max-width:400px;width:90%;text-align:center}
+.install-box h3{margin-bottom:12px;color:#7c6cf0}
+.install-box p{font-size:13px;color:#aaa;margin-bottom:16px;line-height:1.5}
+.install-box .steps{text-align:left;font-size:13px;color:#ccc;margin-bottom:16px}
+.install-box .steps div{padding:6px 0;display:flex;align-items:center;gap:8px}
+.install-box .steps .num{background:#7c6cf0;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.install-box button{padding:10px 24px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:600}
+.install-box .pri{background:#7c6cf0;color:#fff;margin-right:8px}
+.install-box .sec{background:#2e2e3e;color:#ccc}
 </style>
 </head>
 <body>
-<div class="install-bar" id="installBar" onclick="installApp()">Install as App</div>
 <header>
 <div class="logo"><div class="logo-icon">A</div><span>My AI Agent</span></div>
-<div class="hdr-btns"><button onclick="newChat()">New</button><button class="install" id="installBtn" onclick="installApp()" style="display:none">Install App</button></div>
+<div class="hdr-btns">
+<button onclick="newChat()">New</button>
+<button class="install-btn" id="installBtn" onclick="showInstallModal()"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download App</button>
+</div>
 </header>
 <div class="lang-bar" id="langBar"></div>
 <div class="chat" id="chat"><div class="welcome" id="welcome"></div></div>
@@ -71,33 +84,33 @@ footer{text-align:center;padding:6px;font-size:11px;color:#555}
 <button class="send" onclick="send()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
 </div>
 <footer>My AI Agent - Powered by Claude API</footer>
+<div class="install-modal" id="installModal">
+<div class="install-box">
+<h3>Download My AI Agent</h3>
+<div id="installContent"></div>
+</div>
+</div>
 <script>
 const LANGS=[{c:'gb',n:'English',l:'en',p:'Type a message...',w:'Hello! I am your AI Agent. I can run code, search Wikipedia, do math, generate files, and chat in any language!'},
 {c:'in',n:'\u0939\u093f\u0928\u094d\u0926\u0940',l:'hi',p:'\u0905\u092a\u0928\u093e \u0938\u0902\u0926\u0947\u0936 \u0932\u093f\u0916\u0947\u0902...',w:'Namaste! Main aapka AI Agent hoon. Code run karna, Wikipedia search, math, files banana, aur kisi bhi language mein baat - sab kar sakta hoon!'},
-{c:'es',n:'Espa\u00f1ol',l:'es',p:'Escribe un mensaje...',w:'\u00a1Hola! Soy tu agente IA. \u00a1Puedo ejecutar c\u00f3digo, buscar en Wikipedia, hacer matem\u00e1ticas y m\u00e1s!'},
-{c:'fr',n:'Fran\u00e7ais',l:'fr',p:'\u00c9crivez un message...',w:'Bonjour! Je suis votre agent IA. Je peux ex\u00e9cuter du code, chercher sur Wikip\u00e9dia et plus!'},
-{c:'de',n:'Deutsch',l:'de',p:'Nachricht eingeben...',w:'Hallo! Ich bin Ihr KI-Agent. Ich kann Code ausf\u00fchren, Wikipedia durchsuchen und mehr!'},
-{c:'cn',n:'\u4e2d\u6587',l:'zh',p:'\u8f93\u5165\u6d88\u606f...',w:'\u4f60\u597d\uff01\u6211\u662f\u4f60\u7684AI\u52a9\u624b\u3002\u6211\u53ef\u4ee5\u8fd0\u884c\u4ee3\u7801\u3001\u641c\u7d22\u7ef4\u57fa\u767e\u79d1\u3001\u505a\u6570\u5b66\u8ba1\u7b97\u7b49\uff01'},
-{c:'jp',n:'\u65e5\u672c\u8a9e',l:'ja',p:'\u30e1\u30c3\u30bb\u30fc\u30b8\u3092\u5165\u529b...',w:'\u3053\u3093\u306b\u3061\u306f\uff01\u79c1\u306f\u3042\u306a\u305f\u306eAI\u30a8\u30fc\u30b8\u30a7\u30f3\u30c8\u3067\u3059\u3002'},
-{c:'kr',n:'\ud55c\uad6d\uc5b4',l:'ko',p:'\uba54\uc2dc\uc9c0 \uc785\ub825...',w:'\uc548\ub155\ud558\uc138\uc694! \uc800\ub294 \ub2f9\uc2e0\uc758 AI \uc5d0\uc774\uc804\ud2b8\uc785\ub2c8\ub2e4.'},
-{c:'sa',n:'\u0627\u0644\u0639\u0631\u0628\u064a\u0629',l:'ar',p:'\u0627\u0643\u062a\u0628 \u0631\u0633\u0627\u0644\u0629...',w:'\u0645\u0631\u062d\u0628\u0627! \u0623\u0646\u0627 \u0648\u0643\u064a\u0644 \u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064a \u0627\u0644\u062e\u0627\u0635 \u0628\u0643.',rtl:true},
-{c:'br',n:'Portugu\u00eas',l:'pt',p:'Digite uma mensagem...',w:'Ol\u00e1! Sou seu agente IA. Posso executar c\u00f3digo, pesquisar na Wikip\u00e9dia e mais!'},
-{c:'ru',n:'\u0420\u0443\u0441\u0441\u043a\u0438\u0439',l:'ru',p:'\u041d\u0430\u043f\u0438\u0448\u0438\u0442\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435...',w:'\u041f\u0440\u0438\u0432\u0435\u0442! \u042f \u0432\u0430\u0448 \u0418\u0418-\u0430\u0433\u0435\u043d\u0442.'},
-{c:'pk',n:'\u0627\u0631\u062f\u0648',l:'ur',p:'\u067e\u06cc\u063a\u0627\u0645 \u0644\u06a9\u06be\u06cc\u06ba...',w:'\u0627\u0633\u0644\u0627\u0645 \u0639\u0644\u06cc\u06a9\u0645! \u0645\u06cc\u06ba \u0622\u067e \u06a9\u0627 AI \u0627\u06cc\u062c\u0646\u0679 \u06c1\u0648\u06ba\u06d4',rtl:true}];
+{c:'es',n:'Espa\u00f1ol',l:'es',p:'Escribe...',w:'\u00a1Hola! Soy tu agente IA.'},
+{c:'fr',n:'Fran\u00e7ais',l:'fr',p:'\u00c9crivez...',w:'Bonjour! Je suis votre agent IA.'},
+{c:'de',n:'Deutsch',l:'de',p:'Nachricht...',w:'Hallo! Ich bin Ihr KI-Agent.'},
+{c:'cn',n:'\u4e2d\u6587',l:'zh',p:'\u8f93\u5165...',w:'\u4f60\u597d\uff01\u6211\u662f\u4f60\u7684AI\u52a9\u624b\u3002'},
+{c:'jp',n:'\u65e5\u672c\u8a9e',l:'ja',p:'\u30e1\u30c3\u30bb\u30fc\u30b8...',w:'\u3053\u3093\u306b\u3061\u306f\uff01'},
+{c:'kr',n:'\ud55c\uad6d\uc5b4',l:'ko',p:'\uba54\uc2dc\uc9c0...',w:'\uc548\ub155\ud558\uc138\uc694!'},
+{c:'sa',n:'\u0627\u0644\u0639\u0631\u0628\u064a\u0629',l:'ar',p:'\u0627\u0643\u062a\u0628...',w:'\u0645\u0631\u062d\u0628\u0627!',rtl:true},
+{c:'br',n:'Portugu\u00eas',l:'pt',p:'Digite...',w:'Ol\u00e1!'},
+{c:'ru',n:'\u0420\u0443\u0441\u0441\u043a\u0438\u0439',l:'ru',p:'\u041d\u0430\u043f\u0438\u0448\u0438\u0442\u0435...',w:'\u041f\u0440\u0438\u0432\u0435\u0442!'},
+{c:'pk',n:'\u0627\u0631\u062f\u0648',l:'ur',p:'\u067e\u06cc\u063a\u0627\u0645...',w:'\u0627\u0633\u0644\u0627\u0645 \u0639\u0644\u06cc\u06a9\u0645!',rtl:true}];
 let lang=LANGS[1],msgs=[],deferredPrompt=null;
 const $=id=>document.getElementById(id);
 function init(){
   const bar=$('langBar');
-  LANGS.forEach((l,i)=>{
-    const d=document.createElement('div');
-    d.className='lang'+(i===1?' active':'');
-    d.innerHTML='<small>'+l.c.toUpperCase()+'</small> '+l.n;
-    d.onclick=()=>setLang(i);
-    bar.appendChild(d);
-  });
+  LANGS.forEach((l,i)=>{const d=document.createElement('div');d.className='lang'+(i===1?' active':'');d.innerHTML='<small>'+l.c.toUpperCase()+'</small> '+l.n;d.onclick=()=>setLang(i);bar.appendChild(d)});
   setLang(1);
   if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('installBar').style.display='block';$('installBtn').style.display='inline-block'});
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e});
 }
 function setLang(i){
   lang=LANGS[i];
@@ -106,54 +119,57 @@ function setLang(i){
   $('input').placeholder=lang.p;
   $('welcome').textContent=lang.w;
 }
+function showInstallModal(){
+  const m=$('installModal');
+  const c=$('installContent');
+  if(deferredPrompt){
+    c.innerHTML='<p>Install My AI Agent as an app on your device for quick access!</p><div style="display:flex;gap:8px;justify-content:center"><button class="pri" onclick="doInstall()">Install Now</button><button class="sec" onclick="closeModal()">Cancel</button></div>';
+  } else {
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid=/Android/.test(navigator.userAgent);
+    if(isIOS){
+      c.innerHTML='<p>Install on your iPhone/iPad:</p><div class="steps"><div><span class="num">1</span>Tap the Share button (box with arrow)</div><div><span class="num">2</span>Scroll down and tap "Add to Home Screen"</div><div><span class="num">3</span>Tap "Add"</div></div><button class="sec" onclick="closeModal()">Got it!</button>';
+    } else if(isAndroid){
+      c.innerHTML='<p>Install on your Android device:</p><div class="steps"><div><span class="num">1</span>Tap the menu (3 dots) in Chrome</div><div><span class="num">2</span>Tap "Add to Home screen"</div><div><span class="num">3</span>Tap "Add"</div></div><button class="sec" onclick="closeModal()">Got it!</button>';
+    } else {
+      c.innerHTML='<p>Install on your computer:</p><div class="steps"><div><span class="num">1</span>Click the install icon in Chrome address bar (right side)</div><div><span class="num">2</span>Or press Ctrl+Shift+A and search "My AI Agent"</div><div><span class="num">3</span>Click "Install"</div></div><button class="sec" onclick="closeModal()">Got it!</button>';
+    }
+  }
+  m.classList.add('show');
+}
+function doInstall(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null}closeModal()}
+function closeModal(){$('installModal').classList.remove('show')}
+$('installModal')?.addEventListener('click',e=>{if(e.target.id==='installModal')closeModal()});
 function addMsg(role,html){
-  const d=document.createElement('div');
-  d.className='msg '+role;
+  const d=document.createElement('div');d.className='msg '+role;
   d.innerHTML='<div class="lbl">'+(role==='user'?(lang.l==='hi'?'\u0906\u092a':'You'):'Agent')+'</div>'+html;
   $('chat').appendChild(d);
   d.querySelectorAll('pre code').forEach(b=>{hljs.highlightElement(b);const c=document.createElement('button');c.className='copy-btn';c.textContent='Copy';c.onclick=()=>{navigator.clipboard.writeText(b.textContent);c.textContent='Copied!';setTimeout(()=>c.textContent='Copy',1500)};b.parentElement.appendChild(c)});
   $('chat').scrollTop=$('chat').scrollHeight;
 }
 function addFiles(files){
-  files.forEach(f=>{
-    const d=document.createElement('div');
-    d.className='file-card';
-    d.innerHTML='<div class="info"><span class="icon">\ud83d\udcc4</span><span class="name">'+f.filename+'</span></div><button class="dl" onclick="downloadFile(\''+f.filename.replace(/'/g,"\\'")+'\',\''+btoa(unescape(encodeURIComponent(f.content)))+'\')">\u2b07 Download</button>';
-    $('chat').appendChild(d);
-  });
+  files.forEach(f=>{const d=document.createElement('div');d.className='file-card';
+  d.innerHTML='<div class="info"><span class="icon">\ud83d\udcc4</span><span class="name">'+f.filename+'</span></div><button class="dl" onclick="dlFile(\''+f.filename.replace(/'/g,"\\'")+'\',\''+btoa(unescape(encodeURIComponent(f.content)))+'\')">\u2b07 Download</button>';
+  $('chat').appendChild(d)});
   $('chat').scrollTop=$('chat').scrollHeight;
 }
-function downloadFile(name,b64){
-  const content=decodeURIComponent(escape(atob(b64)));
-  const blob=new Blob([content],{type:'application/octet-stream'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=name;
-  a.click();
-}
+function dlFile(n,b){const c=decodeURIComponent(escape(atob(b)));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c]));a.download=n;a.click()}
 function showTyping(){const d=document.createElement('div');d.className='typing';d.id='typing';d.innerHTML='<span></span><span></span><span></span>';$('chat').appendChild(d);$('chat').scrollTop=$('chat').scrollHeight}
 function hideTyping(){const t=$('typing');if(t)t.remove()}
 async function send(){
-  const txt=$('input').value.trim();
-  if(!txt)return;
-  $('input').value='';
+  const txt=$('input').value.trim();if(!txt)return;$('input').value='';
   if($('welcome'))$('welcome').remove();
-  addMsg('user',txt);
-  msgs.push({role:'user',content:txt});
-  showTyping();
+  addMsg('user',txt);msgs.push({role:'user',content:txt});showTyping();
   try{
     const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs})});
-    const d=await r.json();
-    hideTyping();
+    const d=await r.json();hideTyping();
     if(d.error){addMsg('bot','Error: '+d.error);return}
-    const html=marked.parse(d.text||'No response');
-    addMsg('bot',html);
+    addMsg('bot',marked.parse(d.text||'No response'));
     if(d.files&&d.files.length>0)addFiles(d.files);
     msgs.push({role:'assistant',content:d.text});
-  }catch(e){hideTyping();addMsg('bot','Connection error. Please try again.')}
+  }catch(e){hideTyping();addMsg('bot','Connection error. Try again.')}
 }
 function newChat(){msgs=[];$('chat').innerHTML='<div class="welcome" id="welcome">'+lang.w+'</div>'}
-function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;$('installBar').style.display='none';$('installBtn').style.display='none'}}
 marked.setOptions({highlight:(code,lang)=>{try{return hljs.highlight(code,{language:lang||'plaintext'}).value}catch(e){return code}}});
 init();
 </script>
