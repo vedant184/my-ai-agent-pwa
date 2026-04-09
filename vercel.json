@@ -1,11 +1,10 @@
 {
-  "functions": {
-    "api/chat.py": {
-      "maxDuration": 300
-    }
-  },
-  "rewrites": [
-    { "source": "/api/chat", "destination": "/api/chat.py" },
-    { "source": "/(.*)", "destination": "/public/$1" }
+  "builds": [
+    { "src": "api/chat.py", "use": "@vercel/python", "config": { "maxDuration": 300 } },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/chat", "dest": "/api/chat.py" },
+    { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }
