@@ -24,6 +24,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .install-btn{background:linear-gradient(135deg,#7c6cf0,#5a4fd4)!important;border:none!important;color:#fff!important;font-weight:600;display:flex;align-items:center;gap:6px}
 .install-btn svg{width:16px;height:16px;fill:#fff}
 
+.lang-selector{position:relative;flex-shrink:0;z-index:20}
+.lang-current{display:flex;align-items:center;gap:8px;padding:6px 14px;background:#1e1e2e;border:1px solid #2e2e3e;border-radius:8px;cursor:pointer;color:#e0e0e0;font-size:13px;transition:.2s}
+.lang-current:hover{background:#2a2a3e}
+.lang-current .arrow{transition:transform .2s;font-size:10px}
+.lang-current .arrow.open{transform:rotate(180deg)}
+.lang-dropdown{position:absolute;top:100%;left:0;margin-top:4px;background:#1a1a2a;border:1px solid #2e2e3e;border-radius:10px;padding:4px;display:none;flex-direction:column;gap:2px;min-width:160px;max-height:400px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.lang-dropdown.show{display:flex}
+.lang-dropdown .lang{padding:8px 12px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;color:#ccc;transition:.15s}
+.lang-dropdown .lang:hover{background:#2a2a3e}
+.lang-dropdown .lang.active{background:linear-gradient(135deg,#7c6cf0,#5a4fd4);color:#fff}
+.floating-logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100px;height:100px;background:linear-gradient(135deg,#7c6cf0,#5a4fd4);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:700;color:#fff;z-index:5;transition:opacity .5s ease,transform .5s ease;box-shadow:0 8px 32px rgba(124,108,240,0.4);animation:floatPulse 3s ease-in-out infinite}
+.floating-logo.hidden{opacity:0;transform:translate(-50%,-50%) scale(0.5);pointer-events:none}
+@keyframes floatPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.05)}}
 /* Main layout */
 .main-container{flex:1;display:flex;overflow:hidden;position:relative}
 
@@ -75,7 +88,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .sidebar-close:hover{background:#1e1e2e;color:#e0e0e0}
 .sidebar-close svg{width:20px;height:20px;fill:currentColor}
 
-.lang-bar{display:flex;gap:6px;padding:6px 14px;overflow-x:auto;border-bottom:1px solid #1e1e2e;flex-shrink:0}
+
 .lang-bar::-webkit-scrollbar{height:0}
 .lang{padding:3px 10px;border-radius:16px;border:1px solid #2e2e3e;font-size:11px;cursor:pointer;white-space:nowrap;transition:.2s}
 .lang.active{background:#7c6cf0;border-color:#7c6cf0;color:#fff}
@@ -157,7 +170,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
     <div class="build-progress" id="buildProgress"><div class="bar" id="buildBar"></div></div>
     <div class="build-status" id="buildStatus"><span class="dot"></span><span id="buildText">Building...</span></div>
     <div class="preview-content" id="previewContent">
-      <div class="preview-empty" id="previewEmpty">
+      <div class="floating-logo" id="floatingLogo">A</div>
+<div class="preview-empty" id="previewEmpty">
         <div class="big-icon">ð</div>
         <h3>Welcome to My AI Agent</h3>
         <p>Ask me to create a website, generate code, run Python, search Wikipedia, or do calculations. Open the chat to start!</p>
@@ -166,7 +180,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
   </div>
 
   <!-- Chat Sidebar -->
-  <div class="chat-sidebar" id="chatSidebar">
+  <div class="chat-sidebar collapsed" id="chatSidebar">
     <div class="sidebar-header">
       <div class="title">
         <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
@@ -176,7 +190,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
     </div>
-    <div class="lang-bar" id="langBar"></div>
+    <div class="lang-selector" id="langSelector">
+<div class="lang-current" id="langCurrent" onclick="toggleLangDropdown()"><span id="langFlag"></span><span id="langName"></span><span class="arrow" id="langArrow">▼</span></div>
+<div class="lang-dropdown" id="langDropdown"></div>
+</div>
     <div class="chat" id="chat"><div class="welcome" id="welcome"></div></div>
     <div class="input-area">
       <textarea id="input" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}" placeholder="Type a message..."></textarea>
@@ -186,7 +203,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 </div>
 
 <!-- Chat Toggle Button -->
-<button class="chat-toggle hidden" id="chatToggle" onclick="toggleChat()">
+<button class="chat-toggle" id="chatToggle" onclick="toggleChat()">
   <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
   <span class="badge" id="chatBadge">0</span>
 </button>
@@ -213,7 +230,7 @@ const LANGS=[{c:'gb',n:'English',l:'en',p:'Type a message...',w:'Hello! I am you
 {c:'ru',n:'Ð ÑÑÑÐºÐ¸Ð¹',l:'ru',p:'ÐÐ°Ð¿Ð¸ÑÐ¸ÑÐµ...',w:'ÐÑÐ¸Ð²ÐµÑ!'},
 {c:'pk',n:'Ø§Ø±Ø¯Ù',l:'ur',p:'Ù¾ÛØºØ§Ù...',w:'Ø§Ø³ÙØ§Ù Ø¹ÙÛÚ©Ù!',rtl:true}];
 
-let lang=LANGS[1],msgs=[],deferredPrompt=null,chatOpen=true,previewFiles=[],unreadCount=0;
+let lang=LANGS[1],msgs=[],deferredPrompt=null,chatOpen=false,previewFiles=[],unreadCount=0;
 const $=id=>document.getElementById(id);
 
 function init(){
@@ -232,6 +249,8 @@ function setLang(i){
   $('welcome').textContent=lang.w;
 }
 
+function toggleLangDropdown(){ const dd=$('langDropdown'); const ar=$('langArrow'); dd.classList.toggle('show'); ar.classList.toggle('open'); }
+document.addEventListener('click',function(e){ if(!e.target.closest('#langSelector')){ const dd=$('langDropdown'); if(dd) dd.classList.remove('show'); const ar=$('langArrow'); if(ar) ar.classList.remove('open'); }});
 function toggleChat(){
   chatOpen=!chatOpen;
   const sb=$('chatSidebar');
